@@ -139,6 +139,164 @@ public AST rTerm() throws SyntaxError {
 }
 ```
 
+## Parentheses Evaluation with Call Stack Visualization
+
+### Example: `(A + B) * (C + D)`
+
+**Input Expression:** `(A + B) * (C + D)`
+
+Let's trace through the parser's call stack to see how parentheses are handled:
+
+#### Call Stack Trace:
+
+```
+Stack Level 1: rSimpleExpr()
+│
+├─ Calls rTerm()
+   │
+   Stack Level 2: rTerm()
+   │
+   ├─ Calls rFactor() for left operand
+      │
+      Stack Level 3: rFactor()
+      │
+      ├─ Sees '(' token → calls rExpr()
+         │
+         Stack Level 4: rExpr() [for (A + B)]
+         │
+         ├─ Calls rSimpleExpr()
+            │
+            Stack Level 5: rSimpleExpr()
+            │
+            ├─ Calls rTerm() → rFactor() → returns 'A'
+            ├─ Sees '+' operator
+            ├─ Calls rTerm() → rFactor() → returns 'B'
+            └─ Returns: AddOpTree(+) with children A, B
+         │
+         └─ Returns: AddOpTree(+) with children A, B
+      │
+      ├─ Expects ')' token
+      └─ Returns: AddOpTree(+) with children A, B
+   │
+   ├─ Sees '*' operator
+   ├─ Calls rFactor() for right operand
+      │
+      Stack Level 3: rFactor()
+      │
+      ├─ Sees '(' token → calls rExpr()
+         │
+         Stack Level 4: rExpr() [for (C + D)]
+         │
+         ├─ Similar process as above
+         └─ Returns: AddOpTree(+) with children C, D
+      │
+      └─ Returns: AddOpTree(+) with children C, D
+   │
+   └─ Returns: MultOpTree(*) with children (A+B), (C+D)
+```
+
+#### Resulting AST:
+```
+        *
+       / \
+      +   +
+     / \ / \
+    A  B C  D
+```
+
+#### Stack State Visualization:
+
+**When parsing `(A + B)`:**
+```
+┌─────────────────────┐ ← Stack grows upward
+│ rFactor() (A)       │
+├─────────────────────┤
+│ rTerm() (A)         │
+├─────────────────────┤
+│ rSimpleExpr() (A+B) │
+├─────────────────────┤
+│ rExpr() (A+B)       │
+├─────────────────────┤
+│ rFactor() (A+B)     │ ← Handles parentheses
+├─────────────────────┤
+│ rTerm()             │
+├─────────────────────┤
+│ rSimpleExpr()       │
+└─────────────────────┘
+```
+
+**When parsing `(C + D)`:**
+```
+┌─────────────────────┐ ← New recursive calls
+│ rFactor() (C)       │
+├─────────────────────┤
+│ rTerm() (C)         │
+├─────────────────────┤
+│ rSimpleExpr() (C+D) │
+├─────────────────────┤
+│ rExpr() (C+D)       │
+├─────────────────────┤
+│ rFactor() (C+D)     │ ← Handles parentheses
+├─────────────────────┤
+│ rTerm()             │ ← Still processing * operator
+├─────────────────────┤
+│ rSimpleExpr()       │
+└─────────────────────┘
+```
+
+### Key Insights About Parentheses Handling:
+
+1. **Recursive Calls:** Each `(` triggers a recursive call to `rExpr()`, creating a new stack frame
+2. **Priority Override:** The recursive call ensures expressions in parentheses are fully evaluated before returning to the outer context
+3. **Natural Precedence:** The call stack naturally implements precedence - inner expressions must complete before outer ones
+4. **Stack Unwinding:** As the stack unwinds, it builds the AST from the inside out
+
+### Another Example: `A + (B * C + D) * E`
+
+**Input Expression:** `A + (B * C + D) * E`
+
+#### Parsing Steps:
+1. Parse `A` (simple factor)
+2. Find `+` operator
+3. Parse right side: `(B * C + D) * E`
+4. **Recursive call** for `(B * C + D)`:
+   - Parse `B * C` (multiplication first)
+   - Parse `+ D` (addition)
+   - Return complete subtree
+5. Continue with `* E`
+
+#### Resulting AST:
+```
+      +
+     / \
+    A   *
+       / \
+      +   E
+     / \
+    *   D
+   / \
+  B   C
+```
+
+#### Call Stack at Peak (when parsing `B * C`):
+```
+┌─────────────────────┐
+│ rFactor() (B)       │ ← Deepest level
+├─────────────────────┤
+│ rTerm() (B*C)       │
+├─────────────────────┤
+│ rSimpleExpr() (B*C+D)│
+├─────────────────────┤
+│ rExpr() (B*C+D)     │ ← Recursive call for parentheses
+├─────────────────────┤
+│ rFactor()           │ ← Handles the '(' token
+├─────────────────────┤
+│ rTerm()             │ ← Processing outer * operator
+├─────────────────────┤
+│ rSimpleExpr()       │ ← Processing outer + operator
+└─────────────────────┘
+```
+
 ## Complex Expression Example: `A + B * C + D * E`
 
 **Input Expression:** `A + B * C + D * E`
