@@ -204,46 +204,6 @@ Stack Level 1: rSimpleExpr()
     A  B C  D
 ```
 
-#### Stack State Visualization:
-
-**When parsing `(A + B)`:**
-```
-┌─────────────────────┐ ← Stack grows upward
-│ rFactor() (A)       │
-├─────────────────────┤
-│ rTerm() (A)         │
-├─────────────────────┤
-│ rSimpleExpr() (A+B) │
-├─────────────────────┤
-│ rExpr() (A+B)       │
-├─────────────────────┤
-│ rFactor() (A+B)     │ ← Handles parentheses
-├─────────────────────┤
-│ rTerm()             │
-├─────────────────────┤
-│ rSimpleExpr()       │
-└─────────────────────┘
-```
-
-**When parsing `(C + D)`:**
-```
-┌─────────────────────┐ ← New recursive calls
-│ rFactor() (C)       │
-├─────────────────────┤
-│ rTerm() (C)         │
-├─────────────────────┤
-│ rSimpleExpr() (C+D) │
-├─────────────────────┤
-│ rExpr() (C+D)       │
-├─────────────────────┤
-│ rFactor() (C+D)     │ ← Handles parentheses
-├─────────────────────┤
-│ rTerm()             │ ← Still processing * operator
-├─────────────────────┤
-│ rSimpleExpr()       │
-└─────────────────────┘
-```
-
 ### Key Insights About Parentheses Handling:
 
 1. **Recursive Calls:** Each `(` triggers a recursive call to `rExpr()`, creating a new stack frame
@@ -276,25 +236,6 @@ Stack Level 1: rSimpleExpr()
     *   D
    / \
   B   C
-```
-
-#### Call Stack at Peak (when parsing `B * C`):
-```
-┌─────────────────────┐
-│ rFactor() (B)       │ ← Deepest level
-├─────────────────────┤
-│ rTerm() (B*C)       │
-├─────────────────────┤
-│ rSimpleExpr() (B*C+D)│
-├─────────────────────┤
-│ rExpr() (B*C+D)     │ ← Recursive call for parentheses
-├─────────────────────┤
-│ rFactor()           │ ← Handles the '(' token
-├─────────────────────┤
-│ rTerm()             │ ← Processing outer * operator
-├─────────────────────┤
-│ rSimpleExpr()       │ ← Processing outer + operator
-└─────────────────────┘
 ```
 
 ## Complex Expression Example: `A + B * C + D * E`
