@@ -147,54 +147,6 @@ public AST rTerm() throws SyntaxError {
 
 Let's trace through the parser's call stack to see how parentheses are handled:
 
-#### Call Stack Trace:
-
-```
-Stack Level 1: rSimpleExpr()
-│
-├─ Calls rTerm()
-   │
-   Stack Level 2: rTerm()
-   │
-   ├─ Calls rFactor() for left operand
-      │
-      Stack Level 3: rFactor()
-      │
-      ├─ Sees '(' token → calls rExpr()
-         │
-         Stack Level 4: rExpr() [for (A + B)]
-         │
-         ├─ Calls rSimpleExpr()
-            │
-            Stack Level 5: rSimpleExpr()
-            │
-            ├─ Calls rTerm() → rFactor() → returns 'A'
-            ├─ Sees '+' operator
-            ├─ Calls rTerm() → rFactor() → returns 'B'
-            └─ Returns: AddOpTree(+) with children A, B
-         │
-         └─ Returns: AddOpTree(+) with children A, B
-      │
-      ├─ Expects ')' token
-      └─ Returns: AddOpTree(+) with children A, B
-   │
-   ├─ Sees '*' operator
-   ├─ Calls rFactor() for right operand
-      │
-      Stack Level 3: rFactor()
-      │
-      ├─ Sees '(' token → calls rExpr()
-         │
-         Stack Level 4: rExpr() [for (C + D)]
-         │
-         ├─ Similar process as above
-         └─ Returns: AddOpTree(+) with children C, D
-      │
-      └─ Returns: AddOpTree(+) with children C, D
-   │
-   └─ Returns: MultOpTree(*) with children (A+B), (C+D)
-```
-
 #### Resulting AST:
 ```
         *
