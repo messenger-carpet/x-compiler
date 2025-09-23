@@ -79,15 +79,6 @@ Assignment
 - Generates visual representations (DOT format for Graphviz)
 - Creates tree diagrams for educational purposes
 
-**Implementation Pattern**:
-```
-interface Visitor {
-    visitAssignment(node: AssignmentNode);
-    visitExpression(node: ExpressionNode);
-    visitLiteral(node: LiteralNode);
-}
-```
-
 ## Phase 4: Constrainer (Semantic Decoration)
 
 **Purpose**: Perform semantic analysis and decorate the AST with type and scope information.
